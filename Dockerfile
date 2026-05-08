@@ -54,6 +54,8 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 ENV PATH="/opt/cuda/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/cuda/lib64"
+ENV CUDA_LAUNCH_BLOCKING=1
+ENV CUDA_MODULE_LOADING=LAZY
 
 # Set GCC 13 as host compiler for nvcc
 ENV CC=/usr/bin/gcc-13
