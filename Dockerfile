@@ -1,5 +1,5 @@
 # Build stage for gcc13-libs
-FROM artixlinux/artixlinux:base as builder
+FROM artixlinux/artixlinux:base AS builder
 
 # Set optimization environment variables
 ENV MAKEFLAGS="-j$(($(nproc)-4))"
