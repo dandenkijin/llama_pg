@@ -60,7 +60,7 @@ ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
 # Clone TurboQuant repository
-RUN git clone https://github.com/dandenkijin/llama-cpp-turboquant.git /root/llama-cpp-turboquant
+RUN git clone https://github.com/TheTom/llama-cpp-turboquant.git /root/llama-cpp-turboquant
 
 WORKDIR /root/llama-cpp-turboquant
 
