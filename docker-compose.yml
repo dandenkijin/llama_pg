@@ -1,0 +1,43 @@
+services:
+  llama-server:
+    build: .
+    container_name: llama-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - /home/denkijin/.cache/huggingface/hub/models--unsloth--Qwen3.6-35B-A3B-GGUF:/root/models
+    working_dir: /root/llama-cpp-turboquant
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    cap_add:
+      - IPC_LOCK
+    command:
+      - /root/llama-cpp-turboquant/build/bin/llama-server
+      - -m
+      - /root/models/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+      - --port
+      - "8080"
+      - --host
+      - 0.0.0.0
+      - --cache-type-k
+      - turbo4
+      - --cache-type-v
+      - turbo3
+      - --n-cpu-moe
+      - "36"
+      - -ngl
+      - "99"
+      - --no-mmap
+      - --mlock
+      - --jinja
+      - -c
+      - "256000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

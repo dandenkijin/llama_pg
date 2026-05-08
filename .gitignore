@@ -1,0 +1,41 @@
+# Build artifacts
+build/
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Cache directories
+.cache/
+__pycache__/
+node_modules/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+
+# Model files (too large for git)
+*.gguf
+*.bin
+*.safetensors
+
+# Package files
+*.pkg.tar.*
+*.zst
+
+# OS files
+.DS_Store
+Thumbs.db
