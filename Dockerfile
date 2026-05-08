@@ -59,8 +59,8 @@ ENV LD_LIBRARY_PATH="/opt/cuda/lib64"
 ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
-# Your TurboQuant build
-RUN git clone https://github.com/TheTom/llama-cpp-turboquant.git /root/llama-cpp-turboquant
+# Initialize and update TurboQuant submodule
+RUN git submodule update --init --recursive
 
 WORKDIR /root/llama-cpp-turboquant
 
