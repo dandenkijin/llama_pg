@@ -40,6 +40,9 @@ RUN pacman -Sy --noconfirm \
     cuda \
     nvidia-utils \
     clang \
+    vulkan-headers \
+    vulkan-icd-loader \
+    vulkan-validation-layers \
     && \
     rm -rf /var/cache/pacman/pkg/*
 
@@ -54,8 +57,6 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 ENV PATH="/opt/cuda/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/opt/cuda/lib64"
-ENV CUDA_LAUNCH_BLOCKING=1
-ENV CUDA_MODULE_LOADING=LAZY
 
 # Set GCC 13 as host compiler for nvcc
 ENV CC=/usr/bin/gcc-13
@@ -75,18 +76,3 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON \
       -DCMAKE_CUDA_FLAGS="-arch=sm_89" \
     && cmake --build build --config Release -t llama-server
 
-# Create model download script
-RUN echo '#!/bin/bash\n\
-MODEL_DIR="/root/models"\n\
-MODEL_FILE="Qwen3.6-35B-A3B-Q4_K_M.gguf"\n\
-MODEL_URL=""\n\
-\n\
-mkdir -p ${MODEL_DIR}\n\
-if [ ! -f "${MODEL_DIR}/${MODEL_FILE}" ]; then\n\
-    echo "Downloading model..."\n\
-    wget -O "${MODEL_DIR}/${MODEL_FILE}" "${MODEL_URL}"\n\
-    echo "Model download completed."\n\
-else\n\
-    echo "Model already exists."\n\
-fi' > /root/download_model.sh && \
-    chmod +x /root/download_model.sh
