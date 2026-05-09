@@ -14,7 +14,7 @@ This project provides a reproducible Docker setup for running llama-server with 
 
 ```bash
 # Clone and setup
-git clone <repository-url>
+git clone https://github.com/denkijin/llama_pg.git
 cd llama_pg
 
 # Build and run
@@ -31,7 +31,7 @@ docker compose up --build
 ### Build Configuration
 - **Base**: artixlinux/artixlinux:base
 - **Compiler**: nvcc with GCC 13 host compiler
-- **GPU Architecture**: sm_89 (RTX 4090)
+- **GPU Architecture**: sm_89 (RTX 4080)
 - **Optimization**: Release build with parallel compilation
 
 ## Requirements
@@ -72,6 +72,7 @@ curl -X POST http://localhost:8080/completion \
 ├── .gitignore           # Version control exclusions
 ├── README.md             # This file
 ├── gcc13-*.pkg.tar.zst  # Local GCC 13 packages
+|-- gcc14-*.pkg.tar.zst  # Local GCC 14 packages
 └── .pi/                 # Agent configurations
 ```
 
