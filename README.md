@@ -1,6 +1,6 @@
 # Llama Server Docker with GPU Support
 
-This project provides a reproducible Docker setup for running llama-server with CUDA GPU acceleration on Artix Linux.
+This project provides a reproducible Docker setup for running llama-server with CUDA GPU acceleration on Artix Linux. based on https://www.youtube.com/watch?v=8F_5pdcD3HY
 
 ## Features
 
