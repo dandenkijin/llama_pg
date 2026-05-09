@@ -13,11 +13,26 @@ This project provides a reproducible Docker setup for running llama-server with 
 ## Quick Start
 
 ```bash
-# Clone and setup
+# 1. Install Git LFS (if not already installed)
+# Ubuntu/Debian: sudo apt-get install git-lfs
+# Arch/Artix: sudo pacman -S git-lfs
+# macOS: brew install git-lfs
+# Or download from: https://git-lfs.github.com/
+
+# 2. Initialize Git LFS globally (one-time setup)
+git lfs install
+
+# 3. Clone the repository
 git clone https://github.com/denkijin/llama_pg.git
 cd llama_pg
 
-# Build and run
+# 4. Download large files via Git LFS
+git lfs pull
+
+# 5. Verify GCC packages are present
+ls -la *.pkg.tar.zst
+
+# 6. Build and run
 docker compose up --build
 ```
 
@@ -38,7 +53,9 @@ docker compose up --build
 
 - Docker with NVIDIA Container Toolkit
 - NVIDIA GPU with CUDA support
-- Local gcc13 packages (included in repository)
+- Git LFS (for GCC package downloads)
+- Local gcc13 packages (included in repository via Git LFS)
+
 
 ## Version Control
 
@@ -76,7 +93,6 @@ curl -X POST http://localhost:8080/completion \
 └── .pi/                 # Agent configurations
 ```
 
-## Troubleshooting
 
 ### GPU Detection Issues
 - Ensure NVIDIA Container Toolkit is installed
@@ -87,6 +103,7 @@ curl -X POST http://localhost:8080/completion \
 - Clear Docker cache: `docker system prune -a`
 - Check gcc13 package versions
 - Verify all dependencies are installed
+- Ensure GCC packages are properly downloaded via Git LFS
 
 ## License
 
