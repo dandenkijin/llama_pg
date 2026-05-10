@@ -86,10 +86,10 @@ ENV LD_LIBRARY_PATH="/opt/cuda/lib64"
 ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
-# Clone TurboQuant repository
-RUN git clone https://github.com/TheTom/llama-cpp-turboquant.git /root/llama-cpp-turboquant
+# Clone beellama.cpp repository
+RUN git clone https://github.com/Anbeeld/beellama.cpp.git /root/beellama
 
-WORKDIR /root/llama-cpp-turboquant
+WORKDIR /root/beellama
 
 # Build with CUDA using nvcc and GCC 13 host compiler
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON \
@@ -99,4 +99,3 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON \
       -DCMAKE_CUDA_ARCHITECTURES=89 \
       -DCMAKE_CUDA_FLAGS="-arch=sm_89" \
     && cmake --build build --config Release -t llama-server
-

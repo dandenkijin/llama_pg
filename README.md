@@ -38,16 +38,33 @@ docker compose up --build
 
 ## Configuration
 
+### Environment Variables
+The container supports several environment variables for customization:
+
+```bash
+# Model Configuration
+MODEL_FILE=Qwen3.6-35B-A3B-UD-Q4_K_M.gguf    # Model filename
+MODEL_URL=                                      # Model download URL (optional)
+MODEL_DIR=/root/models                          # Model directory
+
+# Performance Settings
+N_CTX=256000                                    # Context size
+N_GPU_LAYERS=99                                 # GPU layers (-1 for all)
+N_THREADS=6                                      # CPU threads
+```
+
 ### Docker Compose
 - **Port**: 8080
 - **GPU**: NVIDIA CUDA with full acceleration
-- **Model**: Qwen3.6-35B-A3B-Q4_K_M.gguf (mounted from local cache)
+- **Model**: Configurable via MODEL_FILE environment variable
+- **Volume**: Mounted from local cache
 
 ### Build Configuration
 - **Base**: artixlinux/artixlinux:base
 - **Compiler**: nvcc with GCC 13 host compiler
 - **GPU Architecture**: sm_89 (RTX 4080)
 - **Optimization**: Release build with parallel compilation
+
 
 ## Requirements
 
@@ -57,53 +74,19 @@ docker compose up --build
 - Local gcc13 packages (included in repository via Git LFS)
 
 
-## Version Control
 
-This project uses Git for version control with the following strategy:
-- **Main branch**: `main` (stable releases)
-- **Feature branches**: `feature/<name>` (experimental changes)
-- **Tags**: `v<major>.<minor>.<patch>` (semantic versioning)
+## BeeLLama Integration
 
-## Development
+This project includes support for BeeLLama.cpp, an advanced fork with speculative decoding capabilities.
 
-### Building from Source
-```bash
-# Make changes to Dockerfile or docker-compose.yml
-docker compose down
-docker compose up --build
-```
+### BeeLLama Configuration Files
+- **Dockerfile.bee**: Build configuration for BeeLLama.cpp
+- **docker-compose.beellama.yml**: Service orchestration with speculative decoding
 
-### Testing GPU Support
-```bash
-# Test endpoint
-curl -X POST http://localhost:8080/completion \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Hello, how are you?", "n_predict": 10}'
-```
+### Key Differences/Upgrades
+- **Speculative Decoding**: DFlash algorithm with draft model support
+- **Advanced Caching**: additional TurboQuant TCQ cache types
 
-## Architecture
-
-```
-├── Dockerfile              # Main build configuration
-├── docker-compose.yml     # Service orchestration
-├── .gitignore           # Version control exclusions
-├── README.md             # This file
-├── gcc13-*.pkg.tar.zst  # Local GCC 13 packages
-|-- gcc14-*.pkg.tar.zst  # Local GCC 14 packages
-└── .pi/                 # Agent configurations
-```
-
-
-### GPU Detection Issues
-- Ensure NVIDIA Container Toolkit is installed
-- Check GPU architecture matches your hardware
-- Verify CUDA drivers are up to date
-
-### Build Issues
-- Clear Docker cache: `docker system prune -a`
-- Check gcc13 package versions
-- Verify all dependencies are installed
-- Ensure GCC packages are properly downloaded via Git LFS
 
 ## License
 
