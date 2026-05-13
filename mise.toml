@@ -1,0 +1,50 @@
+[settings]
+env_shell_expand = true
+
+[env]
+MODELNAME = "Huihui-Qwen3.6-35B-A3B-abliterated.Q4_K_M.gguf"
+DRAFT_MODELNAME = "dflash-draft-3.6-q4_k_m.gguf"
+SERVICE_NAME = "llama-beellama-server"
+N_PROMPT = "1024"
+N_GEN = "512"
+N_GPU_LAYERS = "41"
+N_THREADS = "6"
+OUT_FMT = "json"
+
+[tasks.up]
+description = "Start the server using Compose (uses your defined command)"
+run = "docker compose -f docker-compose.beellama.yml up -d"
+
+[tasks.down]
+description = "Stop the server"
+run = "docker compose down"
+
+[tasks.logs]
+description = "Tail logs to see TTFT and TPS"
+run = "docker compose logs -f {{env.SERVICE_NAME}}"
+
+[tasks.bench]
+description = "Bench with parity; saves to results.[format]"
+run = """
+docker-compose -f docker-compose.beellama.yml up -d && docker exec {{env.SERVICE_NAME}} ./build/bin/llama-bench \
+  -m /root/models/{{env.MODELNAME}} \
+  --n-gpu-layers {{env.N_GPU_LAYERS}} \
+  --threads {{env.N_THREADS}} \
+  --cache-type-k turbo3_tcq \
+  --cache-type-v turbo3_tcq \
+  --n-cpu-moe 36 \
+  --flash-attn on \
+  -p {{env.N_PROMPT}} \
+  -n {{env.N_GEN}} \
+  -o {{env.OUT_FMT}} > "bench_results.{{env.SERVICE_NAME}}.{{env.OUT_FMT}}"
+"""
+
+[tasks.build_bench]
+description = "Build llama-bench inside the running container"
+run = """
+docker compose exec {{env.SERVICE_NAME}} /usr/bin/cmake \
+  --build ./build \
+  --target llama-bench \
+-j $(nproc)
+"""
+
