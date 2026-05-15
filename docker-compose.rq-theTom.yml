@@ -1,0 +1,101 @@
+services:
+  llama_pg:
+    build:
+      context: .
+      dockerfile: Dockerfile.bee
+    container_name: llama-beellama-server
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${HOME}/models:/root/models
+    working_dir: /root/beellama
+    environment:
+      - MODEL_DIR=/root/models
+      - MODEL_FILE=${MODEL_FILE:-Huihui-Qwen3.6-35B-A3B-abliterated.Q4_K_M.gguf}
+      - DRAFT_MODEL_FILE=${DRAFT_MODEL_FILE:-dflash-draft-3.6-q4_k_m.gguf}
+      - MODEL_URL=${MODEL_URL:-}
+      - N_CTX=${N_CTX:-256144}
+      - N_GPU_LAYERS=${N_GPU_LAYERS:-99}
+      - N_THREADS=${N_THREADS:-6}
+      - MODEL_PATH=${MODEL_DIR}/${MODEL_FILE}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    cap_add:
+      - IPC_LOCK
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command:
+      - /bin/sh
+      - -c
+      - |
+        # Fallback logic for model loading (same as original)
+        MODEL_FILE="$${MODEL_FILE:-Huihui-Qwen3.6-35B-A3B-abliterated.Q4_K_M.gguf}"
+        MODEL_DIR="$${MODEL_DIR:-/root/models}"
+        N_CTX="$${N_CTX:-131072}"
+        N_GPU_LAYERS="$${N_GPU_LAYERS:-32}"
+        N_THREADS="$${N_THREADS:-6}"
+        DRAFT_MODEL_FILE="$${DRAFT_MODEL_FILE:-dflash-draft-3.6-q4_k_m.gguf}"
+
+        echo "MODEL_FILE: $${MODEL_FILE}"
+        echo "MODEL_DIR: $${MODEL_DIR}"
+        echo "DRAFT_MODEL_FILE: $${DRAFT_MODEL_FILE}"
+                
+        # Check for draft model (default to draft-3.6, no blob snapshot)
+        if [ -f "$${MODEL_DIR}/$${DRAFT_MODEL_FILE}" ]; then
+          DRAFT_MODEL_PATH="$${MODEL_DIR}/$${DRAFT_MODEL_FILE}"
+          echo "Found draft model at custom path: $${DRAFT_MODEL_PATH}"
+        else
+          echo "Draft model not found at $${MODEL_DIR}/$${DRAFT_MODEL_FILE}, running without speculation"
+          DRAFT_MODEL_PATH=""
+        fi
+
+        echo "Starting beellama-server with model: $${MODEL_PATH}"
+        if [ -n "$${DRAFT_MODEL_PATH}" ]; then
+          echo "Using draft model: $${DRAFT_MODEL_PATH}"
+          ./build/bin/llama-server \
+            -m "$${MODEL_PATH}" \
+            --spec-type dflash \
+            --spec-draft-model "$${DRAFT_MODEL_PATH}" \
+            --spec-draft-ngl all \
+            --cache-type-k turbo3_tcq \
+            --cache-type-v turbo3_tcq \
+            --flash-attn on \
+            --rope-scaling yarn \
+            --rope-scale 8.0 \
+            -c $${N_CTX} \
+            --n-gpu-layers $${N_GPU_LAYERS} \
+            --n-cpu-moe 36 \
+            --host 0.0.0.0 \
+            --port 8080 \
+            --no-mmap \
+            --mlock \
+            --jinja \
+            --no-warmup \
+            -t $${N_THREADS}
+        else
+          echo "Running without draft model (no speculation)"
+          ./build/bin/llama-server \
+            -m "$${MODEL_PATH}" \
+            --cache-type-k turbo4 \
+            --cache-type-v turbo3 \
+            --flash-attn on \
+            --rope-scaling yarn \
+            --rope-scale 8.0 \
+            -c $${N_CTX} \
+            --n-gpu-layers $${N_GPU_LAYERS} \
+            --host 0.0.0.0 \
+            --port 8080 \
+            --no-mmap \
+            --n-cpu-moe 36 \
+            --mlock \
+            --jinja \
+            --no-warmup \
+            -t $${N_THREADS}
+        fi

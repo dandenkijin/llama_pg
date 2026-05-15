@@ -1,0 +1,86 @@
+# Flexible Dockerfile — fully env-driven, no download logic.
+# Models are expected to be volume-mounted at /root/models.
+# All configuration comes from .env / environment variables.
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Build stage
+# ──────────────────────────────────────────────────────────────────────────────
+FROM artixlinux/artixlinux:base AS builder
+
+ENV MAKEFLAGS="-j$(($(nproc)-4))"
+ENV RUSTFLAGS="-C target-cpu=native"
+ENV CARGO_BUILD_JOBS=$(($(nproc)-4))
+
+RUN pacman -Sy --noconfirm \
+    base-devel git cmake ninja python clang \
+    && rm -rf /var/cache/pacman/pkg/*
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Runtime stage
+# ──────────────────────────────────────────────────────────────────────────────
+FROM artixlinux/artixlinux:base
+
+RUN pacman -Sy --noconfirm \
+    base-devel git cmake ninja python \
+    cuda nvidia-utils clang \
+    vulkan-headers vulkan-icd-loader vulkan-validation-layers \
+    && rm -rf /var/cache/pacman/pkg/*
+
+# ── NVIDIA runtime ──────────────────────────────────────────────────────────
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV PATH="/opt/cuda/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/opt/cuda/lib64"
+ENV CC=/usr/bin/gcc-13
+ENV CXX=/usr/bin/g++-13
+
+# ── Model configuration (all overridable via .env) ──────────────────────────
+ENV MODEL_DIR=/root/models
+ENV MODEL_FILE=Qwen3.6-35B-A3B-UD-Q4_K_M.gguf
+ENV DRAFT_MODEL_FILE=dflash-draft-3.6-q4_k_m.gguf
+
+# ── Performance (all overridable via .env) ──────────────────────────────────
+ENV N_CTX=256000
+ENV N_GPU_LAYERS=99
+ENV N_THREADS=6
+ENV N_CPU_MOE=36
+
+# ── Cache / attention ───────────────────────────────────────────────────────
+ENV CACHE_TYPE_K=turbo3_tcq
+ENV CACHE_TYPE_V=turbo3_tcq
+ENV FLASH_ATTN=on
+
+# ── Rope ────────────────────────────────────────────────────────────────────
+ENV ROPE_SCALING=yarn
+ENV ROPE_SCALE=8.0
+
+# ── Runtime flags (true/false) ──────────────────────────────────────────────
+ENV NO_MMAP=true
+ENV MLOCK=true
+ENV JINJA=true
+ENV NO_WARMUP=true
+
+# ── Speculative decoding ────────────────────────────────────────────────────
+ENV SPEC_TYPE=dflash
+ENV SPEC_DRAFT_NGL=all
+
+# ── Clone & build llama-cpp-turboquant ──────────────────────────────────────
+RUN git clone https://github.com/TheTom/llama-cpp-turboquant.git /root/llama-cpp-turboquant
+
+WORKDIR /root/llama-cpp-turboquant
+
+RUN cmake -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DGGML_CUDA=ON \
+        -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 \
+        -DCMAKE_CUDA_COMPILER=/opt/cuda/bin/nvcc \
+        -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-13 \
+        -DCMAKE_CUDA_ARCHITECTURES=89 \
+        -DCMAKE_CUDA_FLAGS="-arch=sm_89" \
+    && cmake --build build \
+        --config Release \
+        -t llama-server \
+        -t llama-bench
+
+# ── Expose API port ─────────────────────────────────────────────────────────
+EXPOSE 8080
