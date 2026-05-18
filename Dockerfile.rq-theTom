@@ -47,28 +47,11 @@ RUN pacman -Sy --noconfirm \
     rm -rf /var/cache/pacman/pkg/*
 
 # Environment variables for model configuration
-ENV MODEL_DIR="/root/models"
-ENV MODEL_FILE="Qwen3.6-35B-A3B-Q4_K_M.gguf"
-ENV MODEL_URL=""
+# ENV MODEL_DIR="/root/models"
+# ENV MODEL_FILE="Qwen3.6-35B-A3B-Q4_K_M.gguf"
 ENV N_CTX=256000
 ENV N_GPU_LAYERS=999
 ENV N_THREADS=6
-
-# Create model download script
-RUN echo '#!/bin/bash\n\
-MODEL_DIR="${MODEL_DIR:-/root/models}"\n\
-MODEL_FILE="${MODEL_FILE:-Qwen3.6-35B-A3B-Q4_K_M.gguf}"\n\
-MODEL_URL="${MODEL_URL:-}"\n\
-\n\
-mkdir -p ${MODEL_DIR}\n\
-if [ ! -f "${MODEL_DIR}/${MODEL_FILE}" ]; then\n\
-    echo "Downloading model..."\n\
-    wget -O "${MODEL_DIR}/${MODEL_FILE}" "${MODEL_URL}"\n\
-    echo "Model download completed."\n\
-else\n\
-    echo "Model already exists."\n\
-fi' > /root/download_model.sh && \
-    chmod +x /root/download_model.sh
 
 # Copy and install local gcc13 packages
 COPY ./gcc13-libs-13.4.1+r80+gd6ebfe4-1-x86_64.pkg.tar.zst ./gcc13-13.4.1+r80+gd6ebfe4-1-x86_64.pkg.tar.zst /tmp/
@@ -87,9 +70,10 @@ ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
 # Clone beellama.cpp repository
-RUN git clone https://github.com/Anbeeld/beellama.cpp.git /root/beellama
+RUN git clone https://github.com/johndpope/llama-cpp-turboquant.git /root/llama-cpp-rotorquant
 
-WORKDIR /root/beellama
+WORKDIR /root/llama-cpp-rotorquant
+RUN git checkout feature/planarquant-kv-cache
 
 # Build with CUDA using nvcc and GCC 13 host compiler
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON \

@@ -98,5 +98,10 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON \
       -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-13 \
       -DCMAKE_CUDA_ARCHITECTURES=89 \
       -DCMAKE_CUDA_FLAGS="-arch=sm_89" \
-    && cmake --build build --config Release -t llama-server -t llama-bench
+      && \
+    cmake \
+      --build build \
+      --config Release \
+      -t llama-server \
+      -t llama-bench
 

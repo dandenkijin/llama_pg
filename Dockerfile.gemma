@@ -61,7 +61,7 @@ ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
 # -- repository 
-ENV LLAMA_REPO=https://github.com/johndpope/llama-cpp-turboquant.git
+ENV LLAMA_REPO=https://github.com/ikawrakow/ik_llama.cpp
 
 # Copy and install local gcc13 packages
 COPY ./gcc13-libs-13.4.1+r80+gd6ebfe4-1-x86_64.pkg.tar.zst ./gcc13-13.4.1+r80+gd6ebfe4-1-x86_64.pkg.tar.zst /tmp/
@@ -83,14 +83,13 @@ ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
 # ── Clone & build llama-cpp-turboquant ──────────────────────────────────────
-RUN git clone $LLAMA_REPO  /root/llama-cpp-turboquant
+RUN git clone $LLAMA_REPO  /root/ik_llama-cpp
 
-WORKDIR /root/llama-cpp-turboquant
-
-RUN git checkout feature/planarquant-kv-cache
+WORKDIR /root/ik_llama-cpp
 
 RUN cmake -B build \
         -DCMAKE_BUILD_TYPE=Release \
+        -DGGML_NATIVE=ON \
         -DGGML_CUDA=ON \
         -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 \
         -DCMAKE_CUDA_COMPILER=/opt/cuda/bin/nvcc \

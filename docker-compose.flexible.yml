@@ -7,7 +7,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.flexible
-    container_name: llama-server
+    container_name: llama-server-flex
     ports:
       - "8080:8080"
     volumes:
@@ -19,6 +19,7 @@ services:
       - MODEL_DIR=${MODEL_DIR:-/root/models}
       - MODEL_PATH=${MODEL_DIR}/${MODEL_FILE}
       - DRAFT_MODEL_FILE=${DRAFT_MODEL_FILE:-dflash-draft-3.6-q4_k_m.gguf}
+      - DRAFT_MODEL_PATH=${MODEL_DIR}/${DRAFT_MODEL_FILE}
 
       # Performance (overridable via .env)
       - N_CTX=${N_CTX:-256000}
@@ -55,49 +56,17 @@ services:
       - /bin/sh
       - -c
       - |
-        MODEL_FILE="${MODEL_FILE:-Qwen3.6-35B-A3B-UD-Q4_K_M.gguf}"
-        MODEL_DIR="${MODEL_DIR:-/root/models}"
-        DRAFT_MODEL_FILE="${DRAFT_MODEL_FILE:-dflash-draft-3.6-q4_k_m.gguf}"
-
-        # ── Resolve model path (volume mount first, then custom) ───────────────
-        if [ -f "/root/models/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/$MODEL_FILE" ]; then
-          MODEL_PATH="/root/models/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/$MODEL_FILE"
-        elif [ -f "$MODEL_DIR/$MODEL_FILE" ]; then
-          MODEL_PATH="$MODEL_DIR/$MODEL_FILE"
-        else
-          echo "Model not found at either:"
-          echo "  /root/models/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/$MODEL_FILE"
-          echo "  $MODEL_DIR/$MODEL_FILE"
-          exit 1
-        fi
-
-        # ── Check for draft model ──────────────────────────────────────────────
-        DRAFT_MODEL_PATH=""
-        if [ -f "$MODEL_DIR/$DRAFT_MODEL_FILE" ]; then
-          DRAFT_MODEL_PATH="$MODEL_DIR/$DRAFT_MODEL_FILE"
-        fi
-
-        # ── Build flags from env ───────────────────────────────────────────────
-        NO_MMAP_FLAG=""
-        if [ "$NO_MMAP" = "true" ]; then NO_MMAP_FLAG="--no-mmap"; fi
-        MLOCK_FLAG=""
-        if [ "$MLOCK" = "true" ]; then MLOCK_FLAG="--mlock"; fi
-        JINJA_FLAG=""
-        if [ "$JINJA" = "true" ]; then JINJA_FLAG="--jinja"; fi
-        NO_WARMUP_FLAG=""
-        if [ "$NO_WARMUP" = "true" ]; then NO_WARMUP_FLAG="--no-warmup"; fi
-
         # ── Launch llama-server (single command, fully env-driven) ─────────────
         echo "MODEL_FILE: $MODEL_FILE"
-        echo "MODEL_PATH: $MODEL_PATH"
-        echo "DRAFT_MODEL_PATH: $DRAFT_MODEL_PATH"
+        echo "MODEL_PATH: ${MODEL_DIR}/${MODEL_FILE}"
+        echo "DRAFT_MODEL_PATH: ${MODEL_DIR}/${DRAFT_MODEL_FILE}"
         echo "N_CTX: $N_CTX | N_GPU_LAYERS: $N_GPU_LAYERS | N_THREADS: $N_THREADS"
         echo "CACHE_TYPE_K: $CACHE_TYPE_K | CACHE_TYPE_V: $CACHE_TYPE_V"
 
         /root/llama-cpp-turboquant/build/bin/llama-server \
-          -m "$MODEL_PATH" \
+          -m "${MODEL_DIR}/${MODEL_FILE}" \
           --spec-type "$SPEC_TYPE" \
-          --spec-draft-model "$DRAFT_MODEL_PATH" \
+          --spec-draft-model "${MODEL_DIR}/${DRAFT_MODEL_FILE}" \
           --spec-draft-ngl "$SPEC_DRAFT_NGL" \
           --cache-type-k "$CACHE_TYPE_K" \
           --cache-type-v "$CACHE_TYPE_V" \
@@ -109,10 +78,10 @@ services:
           --n-cpu-moe "$N_CPU_MOE" \
           --host 0.0.0.0 \
           --port 8080 \
-          $NO_MMAP_FLAG \
-          $MLOCK_FLAG \
-          $JINJA_FLAG \
-          $NO_WARMUP_FLAG \
+          ${NO_MMAP:+--no-mmap} \
+          ${MLOCK:+--mlock} \
+          ${JINJA:+--jinja} \
+          ${NO_WARMUP:+--no-warmup} \
           -t "$N_THREADS"
     deploy:
       resources:

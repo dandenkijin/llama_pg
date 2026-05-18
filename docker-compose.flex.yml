@@ -1,29 +1,30 @@
+name: llama-flex
 services:
-  llama_server:
+  llama-server:
     build:
       context: .
-      dockerfile: Dockerfile.rq-theTom
-    container_name: llama-rq-theTom-server
+      dockerfile: Dockerfile.flexible
+    container_name: llama-server-flex
     ports:
       - "8080:8080"
     volumes:
-      - ${HOME}/models:/root/models
+      - ${HOME:-$HOME}/models:/root/models
     env_file:
-      - .env.theTom
-    working_dir: /root/llama-cpp-rotorquant
+      - .env.flex
+    working_dir: /root/llama-cpp-turboquant
     environment:
-      LLAMA_ARG_MODEL: ${MODEL_DIR}/${MODEL_FILE:-Huihui-Qwen3.6-35B-A3B-abliterated.Q4_K_M.gguf}
+      LLAMA_ARG_MODEL: ${MODEL_DIR}/${MODEL_FILE:-Qwen3.6-35B-A3B-UD-Q4_K_M.gguf}
       LLAMA_ARG_CTX_SIZE: ${N_CTX:-256144}
+      LLAMA_ARG_CTX_SIZE_DRAFT: ${N_CTX_DRAFT:-4096}
       LLAMA_ARG_N_GPU_LAYERS: ${N_GPU_LAYERS:-99}
       LLAMA_ARG_THREADS: ${N_THREADS:-6}
       LLAMA_ARG_N_CPU_MOE: ${N_CPU_MOE:-36}
-      LLAMA_ARG_CACHE_TYPE_K: ${CACHE_TYPE_K:-iso3}
-      LLAMA_ARG_CACHE_TYPE_V: ${CACHE_TYPE_V:-iso3}
+      LLAMA_ARG_CACHE_TYPE_K: ${CACHE_TYPE_K:-turbo3_tcq}
+      LLAMA_ARG_CACHE_TYPE_V: ${CACHE_TYPE_V:-turbo3_tcq}
       LLAMA_ARG_FLASH_ATTN: ${FLASH_ATTN:-true}
       LLAMA_ARG_ROPE_SCALING_TYPE: ${ROPE_SCALING:-yarn}
       LLAMA_ARG_ROPE_SCALE: ${ROPE_SCALE:-8.0}
       LLAMA_ARG_NO_MMAP: ${NO_MMAP:-true}
-      LLAMA_ARG_FIT: ${FIT:-true}
       LLAMA_ARG_MLOCK: ${MLOCK:-true}
       LLAMA_ARG_JINJA: ${JINJA:-true}
       LLAMA_ARG_NO_WARMUP: ${NO_WARMUP:-true}
@@ -37,6 +38,7 @@ services:
         hard: -1
     cap_add:
       - IPC_LOCK
+    command: ["/root/llama-cpp-turboquant/build/bin/llama-server"]
     deploy:
       resources:
         reservations:
@@ -44,7 +46,3 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-   
-   
-    command: ["/root/llama-cpp-rotorquant/build/bin/llama-server"]
-
